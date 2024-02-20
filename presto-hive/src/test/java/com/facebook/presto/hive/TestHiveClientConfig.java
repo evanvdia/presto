@@ -17,6 +17,7 @@ import com.facebook.airlift.configuration.testing.ConfigAssertions;
 import com.facebook.drift.transport.netty.codec.Protocol;
 import com.facebook.presto.hive.HiveClientConfig.HdfsAuthenticationType;
 import com.facebook.presto.hive.s3.S3FileSystemType;
+import com.facebook.presto.spi.schedule.NodeSelectionStrategy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.units.DataSize;
@@ -37,6 +38,7 @@ import static com.facebook.presto.hive.HiveCompressionCodec.SNAPPY;
 import static com.facebook.presto.hive.HiveStorageFormat.DWRF;
 import static com.facebook.presto.hive.HiveStorageFormat.ORC;
 import static com.facebook.presto.hive.TestHiveUtil.nonDefaultTimeZone;
+import static com.facebook.presto.spi.schedule.NodeSelectionStrategy.HARD_AFFINITY;
 import static io.airlift.units.DataSize.Unit.BYTE;
 
 public class TestHiveClientConfig
@@ -58,7 +60,7 @@ public class TestHiveClientConfig
                 .setMaxInitialSplitSize(new DataSize(32, Unit.MEGABYTE))
                 .setSplitLoaderConcurrency(4)
                 .setDomainCompactionThreshold(100)
-                .setWriterSortBufferSize(new DataSize(64, Unit.MEGABYTE))
+                .setNodeSelectionStrategy(NodeSelectionStrategy.valueOf("NO_PREFERENCE"))
                 .setMaxConcurrentFileRenames(20)
                 .setMaxConcurrentZeroRowFileCreations(20)
                 .setRecursiveDirWalkerEnabled(false)
@@ -80,7 +82,6 @@ public class TestHiveClientConfig
                 .setFailFastOnInsertIntoImmutablePartitionsEnabled(true)
                 .setSortedWritingEnabled(true)
                 .setMaxPartitionsPerWriter(100)
-                .setMaxOpenSortFiles(50)
                 .setWriteValidationThreads(16)
                 .setTextMaxLineLength(new DataSize(100, Unit.MEGABYTE))
                 .setUseOrcColumnNames(false)
@@ -285,7 +286,7 @@ public class TestHiveClientConfig
                 .setMaxInitialSplitSize(new DataSize(16, Unit.MEGABYTE))
                 .setSplitLoaderConcurrency(1)
                 .setDomainCompactionThreshold(42)
-                .setWriterSortBufferSize(new DataSize(13, Unit.MEGABYTE))
+                .setNodeSelectionStrategy(HARD_AFFINITY)
                 .setMaxConcurrentFileRenames(100)
                 .setMaxConcurrentZeroRowFileCreations(100)
                 .setRecursiveDirWalkerEnabled(true)
@@ -303,7 +304,6 @@ public class TestHiveClientConfig
                 .setInsertOverwriteImmutablePartitionEnabled(true)
                 .setFailFastOnInsertIntoImmutablePartitionsEnabled(false)
                 .setMaxPartitionsPerWriter(222)
-                .setMaxOpenSortFiles(333)
                 .setWriteValidationThreads(11)
                 .setDomainSocketPath("/foo")
                 .setS3FileSystemType(S3FileSystemType.EMRFS)

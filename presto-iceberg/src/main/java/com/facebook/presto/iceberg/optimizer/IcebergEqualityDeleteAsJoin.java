@@ -300,7 +300,8 @@ public class IcebergEqualityDeleteAsJoin
                     icebergTableHandle.getPredicate(),
                     Optional.of(SchemaParser.toJson(new Schema(deleteFields))),
                     Optional.of(deleteInfo.partitionFields.keySet()),                // Enforce reading only delete files that match this schema
-                    Optional.of(deleteInfo.equalityFieldIds));
+                    Optional.of(deleteInfo.equalityFieldIds),
+                    Collections.emptyList());
 
             return new TableScanNode(Optional.empty(),
                     idAllocator.getNextId(),
@@ -326,7 +327,8 @@ public class IcebergEqualityDeleteAsJoin
                     icebergTableHandle.getPredicate(),
                     icebergTableHandle.getTableSchemaJson(),
                     icebergTableHandle.getPartitionSpecId(),
-                    icebergTableHandle.getEqualityFieldIds());
+                    icebergTableHandle.getEqualityFieldIds(),
+                    Collections.emptyList());
 
             VariableReferenceExpression dataSequenceNumberVariableReference = toVariableReference(DATA_SEQUENCE_NUMBER_COLUMN_HANDLE);
             ImmutableMap.Builder<VariableReferenceExpression, ColumnHandle> assignmentsBuilder = ImmutableMap.<VariableReferenceExpression, ColumnHandle>builder()

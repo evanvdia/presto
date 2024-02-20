@@ -198,7 +198,8 @@ public class IcebergPlanOptimizer
                     simplifiedColumnDomain.intersect(oldTableHandle.getPredicate()),
                     oldTableHandle.getTableSchemaJson(),
                     oldTableHandle.getPartitionSpecId(),
-                    oldTableHandle.getEqualityFieldIds());
+                    oldTableHandle.getEqualityFieldIds(),
+                    oldTableHandle.getSortOrder());
             TableScanNode newTableScan = new TableScanNode(
                     tableScan.getSourceLocation(),
                     tableScan.getId(),

@@ -1132,3 +1132,39 @@ In the following query, the expression CURRENT_TIMESTAMP returns the current tim
             20 | canada        |         2 | comment
             30 | mexico        |         3 | comment
     (3 rows)
+
+Sorted Tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The connector supports to create sorted files.
+Data in the Iceberg table is sorted during the writing process within each file.
+
+Sorted Iceberg tables can provide a huge increase in performance in query times.
+Sorting is particularly beneficial when the sorted columns show a
+high cardinality and are used as a filter for selective reads.
+
+The sort order is configured with the ``sorted_by`` table property.
+When creating the table, can specify an array of one or more columns to use for sorting.
+The following example creates the table with sorted_by property and sorts file based on field ``join_date``.
+
+    CREATE TABLE emp.employees.employee (
+        emp_id BIGINT,
+        emp_name VARCHAR,
+        join_date DATE,
+        country VARCHAR)
+    WITH (sorted_by = ARRAY['join_date'])
+
+Sorting can be combined with partitioning on the same column. For example::
+
+    CREATE TABLE emp.employees.employee (
+        emp_id BIGINT,
+        emp_name VARCHAR,
+        join_date DATE,
+        country VARCHAR)
+    WITH (
+        partitioning = ARRAY['month(join_date)'],
+        sorted_by = ARRAY['join_date']
+    )
+
+To disable the sorted writing, set the session property
+``sorted_writing_enabled`` to ``false``.
