@@ -1147,6 +1147,8 @@ The sort order is configured with the ``sorted_by`` table property.
 When creating the table, can specify an array of one or more columns to use for sorting.
 The following example creates the table with sorted_by property and sorts file based on field ``join_date``.
 
+.. code-block:: text
+
     CREATE TABLE emp.employees.employee (
         emp_id BIGINT,
         emp_name VARCHAR,
