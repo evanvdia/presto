@@ -1152,7 +1152,9 @@ The following example creates the table with sorted_by property and sorts file b
         emp_name VARCHAR,
         join_date DATE,
         country VARCHAR)
-    WITH (sorted_by = ARRAY['join_date'])
+    WITH (
+        sorted_by = ARRAY['join_date']
+    )
 
 Sorting can be combined with partitioning on the same column. For example::
 
