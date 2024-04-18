@@ -56,8 +56,10 @@ public class QueryRunner
             Optional<HostAndPort> httpProxy,
             Optional<String> keystorePath,
             Optional<String> keystorePassword,
+            Optional<String> keyStoreType,
             Optional<String> truststorePath,
             Optional<String> truststorePassword,
+            Optional<String> trustStoreType,
             Optional<String> accessToken,
             Optional<String> user,
             Optional<String> password,
@@ -72,7 +74,7 @@ public class QueryRunner
         this.session = new AtomicReference<>(requireNonNull(session, "session is null"));
         this.debug = debug;
 
-        this.sslSetup = builder -> setupSsl(builder, keystorePath, keystorePassword, truststorePath, truststorePassword);
+        this.sslSetup = builder -> setupSsl(builder, keystorePath, keystorePassword, keyStoreType, truststorePath, truststorePassword, trustStoreType);
 
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
