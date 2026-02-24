@@ -121,17 +121,20 @@ public class CreateMaterializedViewTask
                 statement.getComment());
 
         String sql = getFormattedSql(statement.getQuery(), sqlParser, Optional.of(parameters));
+        String federatedQueryFlag = String.valueOf(analysis.getTableNodes().stream()
+                .map(table -> createQualifiedObjectName(session, table, table.getName(), metadata))
+                .anyMatch(tableName -> !viewName.getCatalogName().equals(tableName.getCatalogName())));
 
         List<SchemaTableName> baseTables = analysis.getTableNodes().stream()
                 .map(table -> {
                     QualifiedObjectName tableName = createQualifiedObjectName(session, table, table.getName(), metadata);
-                    if (!viewName.getCatalogName().equals(tableName.getCatalogName())) {
-                        throw new SemanticException(
-                                NOT_SUPPORTED,
-                                statement,
-                                "Materialized view %s created from a base table in a different catalog %s is not supported.",
-                                viewName, tableName);
-                    }
+//                    if (!viewName.getCatalogName().equals(tableName.getCatalogName())) {
+//                        throw new SemanticException(
+//                                NOT_SUPPORTED,
+//                                statement,
+//                                "Materialized view %s created from a base table in a different catalog %s is not supported.",
+//                                viewName, tableName);
+//                    }
                     return toSchemaTableName(tableName);
                 })
                 .distinct()
@@ -166,7 +169,8 @@ public class CreateMaterializedViewTask
                 extractor.getMaterializedViewColumnMappings(),
                 extractor.getMaterializedViewDirectColumnMappings(),
                 extractor.getBaseTablesOnOuterJoinSide(),
-                Optional.empty());
+                Optional.empty(),
+                federatedQueryFlag);
         try {
             metadata.createMaterializedView(session, viewName.getCatalogName(), viewMetadata, viewDefinition, statement.isNotExists());
         }

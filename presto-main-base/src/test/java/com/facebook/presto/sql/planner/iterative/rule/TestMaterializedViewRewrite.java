@@ -479,7 +479,8 @@ public class TestMaterializedViewRewrite
                     ImmutableList.of(),
                     Optional.empty(),
                     Optional.of(stalenessConfig),
-                    Optional.of(MaterializedViewRefreshType.FULL)));
+                    Optional.of(MaterializedViewRefreshType.FULL),
+                    "false"));
         }
 
         @Override
@@ -593,7 +594,8 @@ public class TestMaterializedViewRewrite
                     ImmutableList.of(),
                     Optional.empty(),
                     Optional.empty(),
-                    Optional.empty()));
+                    Optional.empty(),
+                    "false"));
         }
 
         @Override

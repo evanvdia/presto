@@ -41,6 +41,7 @@ public final class MaterializedViewDefinition
     private final Optional<List<String>> validRefreshColumns;
     private final Optional<MaterializedViewStalenessConfig> stalenessConfig;
     private final Optional<MaterializedViewRefreshType> refreshType;
+    private final String federatedQueryFlag;
 
     @JsonCreator
     public MaterializedViewDefinition(
@@ -54,7 +55,8 @@ public final class MaterializedViewDefinition
             @JsonProperty("baseTablesOnOuterJoinSide") List<SchemaTableName> baseTablesOnOuterJoinSide,
             @JsonProperty("validRefreshColumns") Optional<List<String>> validRefreshColumns,
             @JsonProperty("stalenessConfig") Optional<MaterializedViewStalenessConfig> stalenessConfig,
-            @JsonProperty("refreshType") Optional<MaterializedViewRefreshType> refreshType)
+            @JsonProperty("refreshType") Optional<MaterializedViewRefreshType> refreshType,
+            @JsonProperty("federatedQueryFlag") String federatedQueryFlag)
     {
         this.originalSql = requireNonNull(originalSql, "originalSql is null");
         this.schema = requireNonNull(schema, "schema is null");
@@ -67,6 +69,7 @@ public final class MaterializedViewDefinition
         this.validRefreshColumns = requireNonNull(validRefreshColumns, "validRefreshColumns is null").map(columns -> unmodifiableList(new ArrayList<>(columns)));
         this.stalenessConfig = requireNonNull(stalenessConfig, "stalenessConfig is null");
         this.refreshType = requireNonNull(refreshType, "refreshType is null");
+        this.federatedQueryFlag = federatedQueryFlag;
     }
 
     @JsonIgnore
@@ -92,7 +95,8 @@ public final class MaterializedViewDefinition
                 baseTablesOnOuterJoinSide,
                 validRefreshColumns,
                 Optional.empty(),
-                Optional.empty());
+                Optional.empty(),
+                "false");
     }
 
     @JsonIgnore
@@ -106,7 +110,8 @@ public final class MaterializedViewDefinition
             Map<String, Map<SchemaTableName, String>> originalColumnMapping,
             Map<String, Map<SchemaTableName, String>> nonNullColumnMappings,
             List<SchemaTableName> baseTablesOnOuterJoinSide,
-            Optional<List<String>> validRefreshColumns)
+            Optional<List<String>> validRefreshColumns,
+            String federatedQueryFlag)
     {
         this(
                 originalSql,
@@ -122,7 +127,8 @@ public final class MaterializedViewDefinition
                 baseTablesOnOuterJoinSide,
                 validRefreshColumns,
                 Optional.empty(),
-                Optional.empty());
+                Optional.empty(),
+                federatedQueryFlag);
     }
 
     @JsonProperty
@@ -191,6 +197,12 @@ public final class MaterializedViewDefinition
         return refreshType;
     }
 
+    @JsonProperty
+    public String getFederatedQueryFlag()
+    {
+        return federatedQueryFlag;
+    }
+
     @Override
     public String toString()
     {
@@ -206,6 +218,7 @@ public final class MaterializedViewDefinition
         sb.append(",validRefreshColumns=").append(validRefreshColumns.orElse(null));
         sb.append(",stalenessConfig=").append(stalenessConfig.orElse(null));
         sb.append(",refreshType=").append(refreshType.orElse(null));
+        sb.append(",federatedQueryFlag=").append(federatedQueryFlag);
         sb.append("}");
         return sb.toString();
     }

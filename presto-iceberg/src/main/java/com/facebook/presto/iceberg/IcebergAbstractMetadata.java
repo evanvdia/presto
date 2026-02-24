@@ -276,6 +276,7 @@ public abstract class IcebergAbstractMetadata
     protected static final String PRESTO_MATERIALIZED_VIEW_STALE_READ_BEHAVIOR = "presto.materialized_view.stale_read_behavior";
     protected static final String PRESTO_MATERIALIZED_VIEW_STALENESS_WINDOW = "presto.materialized_view.staleness_window";
     protected static final String PRESTO_MATERIALIZED_VIEW_REFRESH_TYPE = "presto.materialized_view.refresh_type";
+    protected static final String PRESTO_MATERIALIZED_VIEW_WITH_FEDERATED_QUERY_FLAG = "presto.materialized_view.federated_query_flag";
 
     protected static final int CURRENT_MATERIALIZED_VIEW_FORMAT_VERSION = 1;
 
@@ -1720,6 +1721,7 @@ public abstract class IcebergAbstractMetadata
                         .ifPresent(window -> properties.put(PRESTO_MATERIALIZED_VIEW_STALENESS_WINDOW, window.toString()));
                 MaterializedViewRefreshType refreshType = getRefreshType(materializedViewProperties);
                 properties.put(PRESTO_MATERIALIZED_VIEW_REFRESH_TYPE, refreshType.name());
+                properties.put(PRESTO_MATERIALIZED_VIEW_WITH_FEDERATED_QUERY_FLAG, viewDefinition.getFederatedQueryFlag());
 
                 for (SchemaTableName baseTable : viewDefinition.getBaseTables()) {
                     properties.put(getBaseTableViewPropertyName(baseTable), "0");
@@ -1775,6 +1777,7 @@ public abstract class IcebergAbstractMetadata
 
         Map<String, String> viewProperties = viewMetadata.get().getProperties();
         String originalSql = viewProperties.get(PRESTO_MATERIALIZED_VIEW_ORIGINAL_SQL);
+        String federatedQueryFlag = viewProperties.get(PRESTO_MATERIALIZED_VIEW_WITH_FEDERATED_QUERY_FLAG);
 
         if (originalSql == null) {
             return Optional.empty();
@@ -1847,7 +1850,8 @@ public abstract class IcebergAbstractMetadata
                 ImmutableList.of(),
                 Optional.empty(),
                 stalenessConfig,
-                refreshType));
+                refreshType,
+                federatedQueryFlag));
     }
 
     @Override
@@ -1902,23 +1906,26 @@ public abstract class IcebergAbstractMetadata
         Optional<Long> lastFreshTime = Optional.of(lastRefreshSnapshot.timestampMillis());
 
         boolean isStale = false;
-        for (SchemaTableName baseTable : definition.get().getBaseTables()) {
-            Table baseIcebergTable = getIcebergTable(session, baseTable);
-            long currentSnapshotId = baseIcebergTable.currentSnapshot() != null
-                    ? baseIcebergTable.currentSnapshot().snapshotId()
-                    : 0L;
+        String federatedQueryFlag = props.get(PRESTO_MATERIALIZED_VIEW_WITH_FEDERATED_QUERY_FLAG);
+        if (!"true".equals(federatedQueryFlag)) {
+            for (SchemaTableName baseTable : definition.get().getBaseTables()) {
+                Table baseIcebergTable = getIcebergTable(session, baseTable);
+                long currentSnapshotId = baseIcebergTable.currentSnapshot() != null
+                        ? baseIcebergTable.currentSnapshot().snapshotId()
+                        : 0L;
 
-            String key = getBaseTableViewPropertyName(baseTable);
-            String recordedSnapshotStr = props.get(key);
-            if (recordedSnapshotStr == null) {
-                throw new PrestoException(ICEBERG_INVALID_MATERIALIZED_VIEW,
-                        format("Missing base table snapshot property for %s in materialized view %s", baseTable, materializedViewName));
-            }
-            long recordedSnapshotId = parseLong(recordedSnapshotStr);
+                String key = getBaseTableViewPropertyName(baseTable);
+                String recordedSnapshotStr = props.get(key);
+                if (recordedSnapshotStr == null) {
+                    throw new PrestoException(ICEBERG_INVALID_MATERIALIZED_VIEW,
+                            format("Missing base table snapshot property for %s in materialized view %s", baseTable, materializedViewName));
+                }
+                long recordedSnapshotId = parseLong(recordedSnapshotStr);
 
-            if (currentSnapshotId != recordedSnapshotId) {
-                isStale = true;
-                break;
+                if (currentSnapshotId != recordedSnapshotId) {
+                    isStale = true;
+                    break;
+                }
             }
         }
 
