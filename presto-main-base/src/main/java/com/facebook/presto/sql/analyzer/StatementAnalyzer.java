@@ -1661,6 +1661,8 @@ class StatementAnalyzer
                 else {
                     throw new PrestoException(StandardErrorCode.INVALID_FUNCTION_ARGUMENT, "Cannot unnest type: " + expressionType);
                 }
+                ImmutableList<Field> fields = outputFields.build();
+                fields.forEach(field -> analysis.addSourceColumns(field, analysis.getExpressionSourceColumns(expression)));
             }
             if (node.isWithOrdinality()) {
                 outputFields.add(Field.newUnqualified(node.getLocation(), Optional.empty(), BIGINT));
