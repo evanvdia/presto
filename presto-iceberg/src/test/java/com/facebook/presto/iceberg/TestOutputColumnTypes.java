@@ -254,6 +254,67 @@ public class TestOutputColumnTypes
     }
 
     @Test
+    public void testOutputColumnsForSingleUnnestWithTwoExpressions()
+            throws Exception
+    {
+        runQueryAndWaitForEvents(
+                "CREATE TABLE student_scores( student_name VARCHAR, subjects ARRAY(VARCHAR), scores ARRAY(INTEGER))", 2);
+        runQueryAndWaitForEvents(
+                "INSERT INTO  student_scores VALUES('Alice', ARRAY['Math', 'Science', 'English'], ARRAY[95, 88, 92]), ('Bob',   ARRAY['Math', 'Science', 'English'], ARRAY[78, 85, 90]),('Carol', ARRAY['Math', 'Science'], ARRAY[88, 91])", 2);
+        runQueryAndWaitForEvents(
+                "CREATE TABLE student_scores_details AS SELECT student_name, u.subject, u.score FROM  student_scores\n" +
+                        "CROSS JOIN UNNEST(subjects, scores) AS u(subject, score)", 2);
+
+        QueryCompletedEvent event = getOnlyElement(generatedEvents.getQueryCompletedEvents());
+
+        assertThat(event.getIoMetadata().getOutput().get().getColumns().get())
+                .containsExactly(
+                        new OutputColumnMetadata("student_name", "varchar", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_scores"), "student_name"))),
+                        new OutputColumnMetadata("subject", "varchar", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_scores"), "subjects"))),
+                        new OutputColumnMetadata("score", "integer", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_scores"), "scores"))));
+    }
+
+    @Test
+    public void testOutputColumnsForSingleUnnestWithTwoMapExpressions()
+            throws Exception
+    {
+        runQueryAndWaitForEvents(
+                "CREATE TABLE student_grade_map(" +
+                        "student_name VARCHAR, " +
+                        "subject_scores MAP(VARCHAR, INTEGER), " +
+                        "subject_grades MAP(VARCHAR, VARCHAR))", 2);
+        runQueryAndWaitForEvents(
+                "INSERT INTO student_grade_map VALUES" +
+                        "('Alice', MAP(ARRAY['Math', 'Science', 'English'], ARRAY[95, 88, 92]), " +
+                        "          MAP(ARRAY['Math', 'Science', 'English'], ARRAY['A', 'B+', 'A+']))," +
+                        "('Bob',   MAP(ARRAY['Math', 'Science'], ARRAY[78, 85]), " +
+                        "          MAP(ARRAY['Math', 'Science'], ARRAY['B+', 'A+']))", 2);
+        runQueryAndWaitForEvents(
+                "CREATE TABLE student_grade_map_details AS " +
+                        "SELECT student_name, u.subject1, u.score, u.subject2, u.grade " +
+                        "FROM student_grade_map " +
+                        "CROSS JOIN UNNEST(subject_scores, subject_grades) AS u(subject1, score, subject2, grade)", 2);
+
+        QueryCompletedEvent event = getOnlyElement(generatedEvents.getQueryCompletedEvents());
+
+        assertThat(event.getIoMetadata().getOutput().get().getColumns().get())
+                .containsExactly(
+                        new OutputColumnMetadata("student_name", "varchar", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_grade_map"), "student_name"))),
+                        new OutputColumnMetadata("subject1", "varchar", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_grade_map"), "subject_scores"))),
+                        new OutputColumnMetadata("score", "integer", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_grade_map"), "subject_scores"))),
+                        new OutputColumnMetadata("subject2", "varchar", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_grade_map"), "subject_grades"))),
+                        new OutputColumnMetadata("grade", "varchar", ImmutableSet.of(
+                                new SourceColumn(new QualifiedObjectName("iceberg", "tpch", "student_grade_map"), "subject_grades"))));
+    }
+
+    @Test
     public void testOutputColumnsForCreateTableAsSelectWithColumns()
             throws Exception
     {

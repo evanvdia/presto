@@ -1634,6 +1634,7 @@ class StatementAnalyzer
         protected Scope visitUnnest(Unnest node, Optional<Scope> scope)
         {
             ImmutableList.Builder<Field> outputFields = ImmutableList.builder();
+            int fieldsBefore = 0;
             for (Expression expression : node.getExpressions()) {
                 ExpressionAnalysis expressionAnalysis = analyzeExpression(expression, createScope(scope));
                 if (!expressionAnalysis.getScalarSubqueries().isEmpty()) {
@@ -1661,8 +1662,13 @@ class StatementAnalyzer
                 else {
                     throw new PrestoException(StandardErrorCode.INVALID_FUNCTION_ARGUMENT, "Cannot unnest type: " + expressionType);
                 }
-                ImmutableList<Field> fields = outputFields.build();
-                fields.forEach(field -> analysis.addSourceColumns(field, analysis.getExpressionSourceColumns(expression)));
+
+                ImmutableList<Field> allFields = outputFields.build();
+                Set<SourceColumn> sourceColumns = analysis.getExpressionSourceColumns(expression);
+                for (int i = fieldsBefore; i < allFields.size(); i++) {
+                    analysis.addSourceColumns(allFields.get(i), sourceColumns);
+                }
+                fieldsBefore = allFields.size();
             }
             if (node.isWithOrdinality()) {
                 outputFields.add(Field.newUnqualified(node.getLocation(), Optional.empty(), BIGINT));
